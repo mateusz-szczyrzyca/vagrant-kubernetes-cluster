@@ -95,7 +95,7 @@
     when: ansible_swaptotal_mb > 0  
   
   - name: Add entries to /etc/hosts
-    shell: echo "15.0.0.5 k8s-master" >> /etc/hosts
+    shell: echo "{{ master_ip }} {{ master_name }}" >> /etc/hosts
 
   - name: Add an apt signing key for Kubernetes
     apt_key:
