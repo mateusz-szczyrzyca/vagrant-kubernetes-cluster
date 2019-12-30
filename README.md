@@ -137,8 +137,6 @@ Now go to the repository, Vagrantfile should be there and write:
 
 If everything is ok, vagrant should start 4 vms and ansible should perform configuration of these vms to work within the cluster.
 
-## 6. Interact with your cluster
-
 You can check if VMs are working properly by typing vagrant status:
 
 ```bash
@@ -154,6 +152,10 @@ This environment represents multiple VMs. The VMs are all listed
 above with their current state. For more information about a specific
 VM, run vagrant status NAME.
 ```
+###
+###
+###
+## 6. Interact with your cluster
 
 When all machines are working and there were no errors during ansible configuration, type:
 
