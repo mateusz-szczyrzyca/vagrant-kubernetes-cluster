@@ -57,7 +57,7 @@ and vms are less likely to be compromised.
 - docker and docker-compose, for deploy private insecure docker registry for the cluster, but you can use helm to deploy similar registry directly within the cluster
 - NFS server (as [PersistentVolume](https://kubernetes.io/docs/concepts/storage/persistent-volumes/) for pods), you need to setup your own local NFS server
 
-## Prerequsities
+## 1. Prerequsities
 
 Before you start, [I highly recommend to follow this great tutorial from Kelsey Hightower](https://github.com/kelseyhightower/kubernetes-the-hard-way) to understand how kubernetes 
 cluster works and how to bootstrap it correctly from scratch. This gives you better understanding how this 
@@ -74,7 +74,7 @@ Knowing ip addresses are not mandatory to bootstrap and operating this cluster -
 
 This configuration was successfully tested on Manjaro Linux, as VM OS is used Ubuntu 18.04.3 LTS
 
-## 1. Installations
+## 2. Required installations
 
 Install (according to your distribution packages)
 
@@ -95,7 +95,7 @@ If you already have vagrant, install `vagrant-scp` plugin by typing:
 
 Basically you should have available vagrant ssh and vagrant scp commands to interact with VMs
 
-## 2. Setting NFS share
+## 3. Setting NFS share
 
 One directory on host system will be used as an NFS share. In my case this is `/home/nfs`
 
@@ -111,7 +111,7 @@ And you should got:
 
 NOTE: Bear in mind if your host already has 15.0.0.0/16 network interface for different purpose - in such case you have to change playbooks and Vagrantfile. Futhermore, if your host is within a NAT network and this network already uses 15.0.0.0/16 addresses, that's not a good idea to keep using this address for NFS server (without firewall rules, you expose your NFS share to this network)
 
-## 3. Setting INSECURE docker registry
+## 4. Setting INSECURE docker registry
 
 I've used standard docker-compose template in this repo (`docker-registry` directory) - just go to this directory and type:
 
@@ -127,13 +127,13 @@ And if it works correctly you should got:
 
 Alternatively, you can use [docker-registry helm chart to deploy](https://hub.helm.sh/charts/stable/docker-registry)
 
-## 4. Clone this repository
+## 5. Clone this repository
 
 In my case, my vagrant directory is `~/vagrant/vagrant-kubernetes-cluster` and I will be using this directory in this tutorial. In my case kubernetes-cluster is a directory which contains file from this repository. Yoi can clone this by:
 
 `$ git clone https://github.com/mateusz-szczyrzyca/vagrant-kubernetes-cluster/`
 
-## 5. Provision VMs via vagrant
+## 6. Provision VMs via vagrant
 
 Now go to the repository, Vagrantfile should be there and write:
 
@@ -156,10 +156,7 @@ This environment represents multiple VMs. The VMs are all listed
 above with their current state. For more information about a specific
 VM, run vagrant status NAME.
 ```
-###
-###
-###
-## 6. Interact with your cluster
+## 7. Interact with your cluster
 
 When all machines are working and there were no errors during ansible configuration, type:
 
@@ -188,7 +185,7 @@ node-3       Ready    <none>   13m   v1.17.0   15.0.0.13     <none>        Ubunt
 
 It means the cluster is working properly!
 
-## 7. Attach NFS share as PersistentVolume
+## 8. Attach NFS share as PersistentVolume
 
 Now it's time to use our NFS share as PV in our cluster.
 
@@ -224,7 +221,7 @@ NAME                   PROVISIONER                                       RECLAIM
 nfs-client (default)   cluster.local/nfs-client-provisioner-1577712423   Delete          Immediate           true                   12m
 ```
 
-## 8. Using docker with this cluster
+## 9. Using docker with this cluster
 
 To attach to docker daemon exposed by master (or nodes), set this env variable:
 
@@ -236,9 +233,9 @@ And now you can use cluster's docker:
 
 If you want to use your newly created docker image, use `docker build` as before, but when building is finished, check image id of newly created image:
 
-`docker images`
+`$ docker images`
 
-Pick this image, and now use tag:
+Pick this image ID, and now use tag:
 
 `$ docker tag 909252161370 15.0.0.1:5000/my-kubernetes-app`
 
