@@ -4,6 +4,8 @@ Bootstrap easy your own 3-node k8s cluster within vagrant for tests and developm
 
 [This is modified version of this original tutorial from kubernetes.io](https://kubernetes.io/blog/2019/03/15/kubernetes-setup-using-ansible-and-vagrant/)
 
+[[https://github.com/username/repository/blob/master/vagrant-kubernetes-cluster.png|alt=cluster_scheme]]
+
 ## Purpose
 
 Purpose of this project is to create your own cluster for **development** and **testing** purposes.
