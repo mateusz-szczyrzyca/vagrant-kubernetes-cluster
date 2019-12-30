@@ -6,7 +6,7 @@ Bootstrap easy your own 3-node k8s cluster within vagrant for tests and developm
 
 Any PRs highly welcomed.
 
-[[https://github.com/mateusz-szczyrzyca/vagrant-kubernetes-cluster/blob/master/vagrant-kubernetes-cluster.png]]
+![Cluster scheme](https://raw.githubusercontent.com/mateusz-szczyrzyca/vagrant-kubernetes-cluster/master/vagrant-kubernetes-cluster.png?token=AAUSOCYUTUIKBOUQJMJOZCC6BIFDW)
 
 ## Purpose
 
