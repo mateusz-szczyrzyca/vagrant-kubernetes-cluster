@@ -27,7 +27,7 @@ Vagrant.configure("2") do |config|
         config.vm.define "node-#{i}" do |node|
             node.vm.box = IMAGE_NAME
             node.vm.provider "virtualbox" do |vb|
-                vb.customize ["modifyvm", :id, "--cpus", "1"]
+                vb.customize ["modifyvm", :id, "--cpus", "2"]
             end
             node.vm.network "private_network", ip: "15.0.0.#{i + 10}"
             node.vm.hostname = "node-#{i}"
