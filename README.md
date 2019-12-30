@@ -15,7 +15,7 @@ You can use [minikube](https://github.com/kubernetes/minikube) or [microk8s](htt
 The cluster uses vagrant with 4 separate VMs (this can be changed in `Vagrantfile`), 1 for master, 3 for nodes. 
 
 They will be communicating between themselves by an internal vagrant network which simulates normal private network 
-in the same datacenter. In this cluster, you have to attach PersistentVolume by yourself (we will use NFS share for this) 
+in the same datacenter. In this cluster, you have to attach [PersistentVolumes](https://kubernetes.io/docs/concepts/storage/persistent-volumes/) by yourself (we will use NFS share for this) 
 and configure, let's say, your own docker registry.
 
 Because of this, this cluster reflects much better **real** cluster, rather than, for instance - minikube.
@@ -51,7 +51,7 @@ and vms are less likely to be compromised.
 - vagrant with vbox provider (tested on vbox)
 - ansible (to bootstrap cluster when VM are ready)
 - docker and docker-compose, for deploy private insecure docker registry for the cluster, but you can use helm to deploy similar registry directly within the cluster
-- NFS server (as PersistentVolume for pods), you need to setup your own local NFS server
+- NFS server (as [PersistentVolume](https://kubernetes.io/docs/concepts/storage/persistent-volumes/) for pods), you need to setup your own local NFS server
 
 ## Prerequsities
 
@@ -147,11 +147,11 @@ k8s-master                running (virtualbox)
 node-1                    running (virtualbox)
 node-2                    running (virtualbox)
 node-3                    running (virtualbox)
-```
 
 This environment represents multiple VMs. The VMs are all listed
 above with their current state. For more information about a specific
-VM, run `vagrant status NAME`.
+VM, run vagrant status NAME.
+```
 
 When all machines are working and there were no errors during ansible configuration, type:
 
