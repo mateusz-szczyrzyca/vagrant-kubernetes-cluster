@@ -37,11 +37,11 @@ This whole cluster is intended to run on the same machine, hence:
 This cluster is intended to be run only on VMs on host - it's depended on host security mostly, however, be aware that:
 
 - docker daemon on master vm and nodes vm is listening on tcp interface which is highly unsecure
-- docker registry is insecure registry (on your host if you follow this instruction)
-- sudo on root is without password from user vagrant
-- nfs share can be easily exposed outside by simple mistake
-- public vagrant vm image can be malicious and harm your host
-- public docker images can be malicius and harm your vms or host
+- docker registry is an insecure registry (on your host, if you follow this tutorial)
+- sudo on root is without password from user vagrant by default
+- nfs share can be easily exposed outside the host by simple mistake
+- a public vagrant vm image can be malicious and harm your host
+- a public docker images can be malicius and harm your vms or host
 - tls certs are self signed
 
 It's highly recommend to bootstrap this cluster on host which is not directly exposed to the Internet via an public IP 
@@ -52,7 +52,7 @@ and vms are less likely to be compromised.
 
 - 8 vCPU cores recommended (2 vCPU per 1 VM), more is better
 - min 16 GB ram for cluster purposes (4 GB per 1 VM), more is better
-- vagrant with vbox provider (tested on vbox)
+- vagrant with vbox provider (it's tested on virtualbox driver)
 - ansible (to bootstrap cluster when VM are ready)
 - docker and docker-compose, for deploy private insecure docker registry for the cluster, but you can use helm to deploy similar registry directly within the cluster
 - NFS server (as [PersistentVolume](https://kubernetes.io/docs/concepts/storage/persistent-volumes/) for pods), you need to setup your own local NFS server
@@ -93,17 +93,17 @@ If you already have vagrant, install `vagrant-scp` plugin by typing:
 
 `$ vagrant plugin install vagrant-scp`
 
-Basically you should have available vagrant ssh and vagrant scp commands to interact with VMs
+Basically you should have available `vagrant ssh` and `vagrant scp` commands to interact with VMs
 
 ## 3. Setting NFS share
 
-One directory on host system will be used as an NFS share. In my case this is `/home/nfs`
+One directory on host system will be used as a NFS share. In my case this is `/home/nfs`
 
 Add the following line to `/etc/exports` on your host system:
 
 `/home/nfs 15.0.0.0/16(rw,sync,crossmnt,insecure,no_root_squash,no_subtree_check)`
 
-And later type: `# exportfs -avr`
+And later type (from root): `# exportfs -avr`
 
 And you should got:
 
@@ -129,17 +129,17 @@ Alternatively, you can use [docker-registry helm chart to deploy](https://hub.he
 
 ## 5. Clone this repository
 
-In my case, my vagrant directory is `~/vagrant/vagrant-kubernetes-cluster` and I will be using this directory in this tutorial. In my case kubernetes-cluster is a directory which contains file from this repository. Yoi can clone this by:
+In my case, my vagrant directory is `~/vagrant/vagrant-kubernetes-cluster` and I will be using this directory in this tutorial. In my case kubernetes-cluster is a directory which contains file from this repository. You can clone this by:
 
 `$ git clone https://github.com/mateusz-szczyrzyca/vagrant-kubernetes-cluster/`
 
 ## 6. Provision VMs via vagrant
 
-Now go to the repository, Vagrantfile should be there and write:
+Now go to the repository, `Vagrantfil`e should be there and write:
 
 `$ vagrant up`
 
-If everything is ok, vagrant should start 4 vms and ansible should perform configuration of these vms to work within the cluster.
+If everything is ok, vagrant should start 4 vms and ansible should perform configuration of these vms to work within the cluster. This will take a while.
 
 You can check if VMs are working properly by typing vagrant status:
 
@@ -162,8 +162,7 @@ When all machines are working and there were no errors during ansible configurat
 
 `$ vagrant scp k8s-master:/home/vagrant/.kube/config .`
 
-It will copy `/home/vagrant/.kube/config` file to your host machine with certificates which is needed to be used by 
-`kubectl`.
+It will copy `/home/vagrant/.kube/config` file from `k8s-master` vm to your host machine with certificates which is needed to be used by `kubectl` command.
 
 Now you can point to this file:
 
@@ -231,20 +230,32 @@ And now you can use cluster's docker:
 
 `$ docker ps`
 
-If you want to use your newly created docker image, use `docker build` as before, but when building is finished, check image id of newly created image:
+In this case, our private insecure registry is `15.0.0.1:5000`. All VMs (nodes and master) already use this additional insecure registry address, so we can push images there.
 
-`$ docker images`
+If you want to use your newly created docker image, use `docker build` using the following syntax:
 
-Pick this image ID, and now use tag:
+`$ docker build . -t 15.0.0.1:5000/my-kubernetes-app`
 
-`$ docker tag 909252161370 15.0.0.1:5000/my-kubernetes-app`
+Where `my-kubernetes-app` is a name of your application.
 
-And push to this registry, by:
+This build command will automatically tagged this newly created image and later you can push it to private registry by:
 
 `$ docker push 15.0.0.1:5000/my-kubernetes-app`
 
-If you docker registry is working fine now you have new image pushed there, and this new image can be used in kubernetes yaml files in such manner:
+If you docker registry is working fine now you have the new image pushed there, and this new image can be used in kubernetes yaml files in such manner:
 
 ```yaml
         image: 15.0.0.1:5000/my-kubernetes-app
 ```
+
+## 10. TODO
+
+Now you can build and deploy your app to the cluster.
+
+Moreover, consider the following scenarios for further practise:
+
+- try to connect/reconnect nodes and watch what will happen with the cluster
+- add more PersistentVolumes and use them at the same time with different pods
+- use proper TLS certs (use Let's Encrypt to generate them)
+- store/use some secrets
+- bootstrap another such cluster on another machine (if you have) with the same network as current host - now you can "simulate" multi-master cluster with different datacenters if you connect each other.
