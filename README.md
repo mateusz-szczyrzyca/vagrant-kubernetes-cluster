@@ -6,13 +6,14 @@ Bootstrap easy your own 3-node k8s cluster within vagrant for tests and developm
 
 ## Purpose
 
-Purpose of this project is to create your own cluster for **development** and **testing*8 purposes.
+Purpose of this project is to create your own cluster for **development** and **testing** purposes.
 
 **Do not try to create such cluster for production usage!**
 
-You can use [minikube](https://github.com/kubernetes/minikube) or [microk8s](https://microk8s.io/) (and many more similar projects) but using them usually does not reflect the "real" cluster conditions which you may encounter on various cloud providers or manually created cloud clusters
+You can use [minikube](https://github.com/kubernetes/minikube) or [microk8s](https://microk8s.io/) (and many more similar projects) but using them usually does not reflect the "real" cluster conditions which you may encounter on various cloud providers or [manually created cloud clusters](https://github.com/kelseyhightower/kubernetes-the-hard-way)
 
-Cluster uses vagrant to create 4 separate VMs (this can be changed in `Vagrantfile`), 1 for master, 3 for nodes. 
+The cluster uses vagrant with 4 separate VMs (this can be changed in `Vagrantfile`), 1 for master, 3 for nodes. 
+
 They will be communicating between themselves by an internal vagrant network which simulates normal private network 
 in the same datacenter. In this cluster, you have to attach PersistentVolume by yourself (we will use NFS share for this) 
 and configure, let's say, your own docker registry.
@@ -73,10 +74,10 @@ This configuration was successfully tested on Manjaro Linux, as VM OS is used Ub
 
 Install (according to your distribution packages)
 
-- docker (don't forget to add you to docker group to be able to use docker from user)
+- docker (don't forget to add you to `docker` group to be able to use docker from user)
 - ansible (I've tested 2.9.2 version with python 3.8)
 - docker-compose
-- vagrant (with virtualbox provider, tested version 2.2.6)
+- [vagrant](https://www.vagrantup.com/docs/installation/) (with virtualbox provider, tested version 2.2.6)
 - nfs-server (sometimes it's nfs-common package, depends on distribution)
 - [kubectl](https://kubernetes.io/docs/tasks/tools/install-kubectl/)
 - [helm](https://helm.sh/docs/intro/install/)
@@ -92,7 +93,7 @@ Basically you should have available vagrant ssh and vagrant scp commands to inte
 
 ## 2. Setting NFS share
 
-One directory on host system will be used as an NFS share. In my case this is /home/nfs
+One directory on host system will be used as an NFS share. In my case this is `/home/nfs`
 
 Add the following line to `/etc/exports` on your host system:
 
@@ -108,7 +109,9 @@ NOTE: Bear in mind if your host already has 15.0.0.0/16 network interface for di
 
 ## 3. Setting INSECURE docker registry
 
-I've used standard docker-compose template in this repo (`docker-registry` directory) - just put in one directory and type docker-compose up -d
+I've used standard docker-compose template in this repo (`docker-registry` directory) - just go to this directory and type:
+
+`$ docker-compose up -d`
 
 To check if it works correctly you can use curl:
 
@@ -120,7 +123,7 @@ And if it works correctly you should got:
 
 ## 4. Clone this repository
 
-In my case, my vagrant directory is ~/vagrant/vagrant-kubernetes-cluster and I will be using this directory in this tutorial. In my case kubernetes-cluster is a directory which contains file from this repository. Yoi can clone this by:
+In my case, my vagrant directory is `~/vagrant/vagrant-kubernetes-cluster` and I will be using this directory in this tutorial. In my case kubernetes-cluster is a directory which contains file from this repository. Yoi can clone this by:
 
 `$ git clone https://github.com/mateusz-szczyrzyca/vagrant-kubernetes-cluster/`
 
@@ -154,7 +157,8 @@ When all machines are working and there were no errors during ansible configurat
 
 `$ vagrant scp k8s-master:/home/vagrant/.kube/config .`
 
-It will copy `/home/vagrant/.kube/config` file to your host machine with certificates which is needed to be used by `kubectl`.
+It will copy `/home/vagrant/.kube/config` file to your host machine with certificates which is needed to be used by 
+`kubectl`.
 
 Now you can point to this file:
 
@@ -175,11 +179,12 @@ node-3       Ready    <none>   13m   v1.17.0   15.0.0.13     <none>        Ubunt
 ```
 
 It means the cluster is working properly!
-7. Attach NFS share as PersistentVolume
+
+## 7. Attach NFS share as PersistentVolume
 
 Now it's time to use our NFS share as PV in our cluster.
 
-To do this, we will install nfs-client-provisioner from helm chart. To install this, just type:
+To do this, we will install [nfs-client-provisioner](https://hub.helm.sh/charts/rimusz/nfs-client-provisioner) from helm chart. To install this, just type:
 
 `$ helm install stable/nfs-client-provisioner --generate-name --set nfs.server="15.0.0.1" --set nfs.path="/home/nfs"`
 
@@ -193,7 +198,7 @@ NAME                                                READY   STATUS    RESTARTS  
 nfs-client-provisioner-1577712423-b9bcf4778-sw2xm   1/1     Running   0          10s   192.168.139.65   node-3   <none>           <none>
 ```
 
-This pod adds new storageclass `nfs-client`, check this using `$ kubectl get sc`:
+This pod adds a new storageclass `nfs-client`, check this using the command `$ kubectl get sc`:
 
 ```bash
 NAME         PROVISIONER                                       RECLAIMPOLICY   VOLUMEBINDINGMODE   ALLOWVOLUMEEXPANSION   AGE
@@ -201,9 +206,10 @@ nfs-client   cluster.local/nfs-client-provisioner-1577712423   Delete          I
 ```
 
 We need to make this storageclass as default for our cluster, by commmand: 
+
 `$ kubectl patch storageclass nfs-client -p '{"metadata": {"annotations":{"storageclass.kubernetes.io/is-default-class":"true"}}}'`
 
-And now we can check again by $ kubectl get sc that this class is now default:
+And now we can check again by `$ kubectl get sc` that this class is now default:
 
 ```bash
 NAME                   PROVISIONER                                       RECLAIMPOLICY   VOLUMEBINDINGMODE   ALLOWVOLUMEEXPANSION   AGE
