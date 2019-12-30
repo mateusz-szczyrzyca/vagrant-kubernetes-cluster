@@ -1,0 +1,182 @@
+---
+- hosts: all
+  vars:
+    # don't change anything if you don't know what are you doing
+    vagrant_kube_dir: "/home/vagrant/.kube"
+    vagrant_kube_config: "/home/vagrant/.kube/config"
+    kube_admin_config: "/etc/kubernetes/admin.conf"
+    docker_service: "/lib/systemd/system/docker.service"
+    kubeadm_service_conf: "/etc/systemd/system/kubelet.service.d/10-kubeadm.conf"
+    calico_manifest: "https://docs.projectcalico.org/v3.9/manifests/calico.yaml"
+    kubernetes_apt_repo: "deb https://apt.kubernetes.io/ kubernetes-xenial main"
+    docker_apt_repo: "deb [arch=amd64] https://download.docker.com/linux/ubuntu xenial stable"
+    apt_key_kubernetes: "https://packages.cloud.google.com/apt/doc/apt-key.gpg"
+    apt_key_docker: "https://download.docker.com/linux/ubuntu/gpg"
+    host_ip: "15.0.0.1"
+    master_ip: "15.0.0.5"
+    pod_network: "15.0.0.0/16"
+    host_registry_port: "5000"
+    dockerd_daemon_interface: "0.0.0.0:2375"
+    master_name: "k8s-master"
+    nfs_host_share_dir: "/home/nfs"
+    nfs_fstab_entry: "{{ host_ip }}:{{ nfs_host_share_dir }}   /nfs   nfs   defaults,timeo=900,retrans=5,_netdev  0 0"
+  become: true
+
+  
+  tasks:
+  - name: Install packages that allow apt to be used over HTTPS
+    apt:
+      name: "{{ packages }}"
+      state: present
+      update_cache: yes
+    vars:
+      packages:
+      - apt-transport-https
+      - ca-certificates
+      - curl
+      - gnupg-agent
+      - software-properties-common
+
+  - name: Create /nfs directory
+    file:
+      path: /nfs
+      state: directory
+      mode: '0755'
+
+  - name: Adding NFS entries to /etc/fstab
+    shell: echo "{{ nfs_fstab_entry }}" >> /etc/fstab
+
+  - name: Mounting NFS share
+    mount:
+      path: /nfs
+      src: "{{ host_ip }}:{{ nfs_host_share_dir }}"
+      state: mounted
+      fstype: nfs
+
+  - name: Add an apt signing key for Docker
+    apt_key:
+      url: "{{ apt_key_docker }}"
+      state: present
+
+  - name: Add apt repository for stable version
+    apt_repository:
+      repo: "{{ docker_apt_repo }}"
+      state: present
+
+  - name: Install docker and its dependecies
+    apt: 
+      name: "{{ packages }}"
+      state: present
+      update_cache: yes
+    vars:
+      packages:
+      - docker-ce 
+      - docker-ce-cli 
+      - containerd.io
+    notify:
+      - docker enable-and-start
+
+  - name: Add vagrant user to docker group
+    user:
+      name: vagrant
+      group: docker
+
+  - name: Remove swapfile from /etc/fstab
+    mount:
+      name: "{{ item }}"
+      fstype: swap
+      state: absent
+    with_items:
+      - swap
+      - none
+
+  - name: Disable swap
+    command: swapoff -a
+    when: ansible_swaptotal_mb > 0
+    
+  - name: Add an apt signing key for Kubernetes
+    apt_key:
+      url: "{{ apt_key_kubernetes }}"
+      state: present
+
+  - name: Adding apt repository for Kubernetes
+    apt_repository:
+      repo: "{{ kubernetes_apt_repo }}"
+      state: present
+      filename: kubernetes.list
+
+  - name: Install Kubernetes binaries
+    apt: 
+      name: "{{ packages }}"
+      state: present
+      update_cache: yes
+    vars:
+      packages:
+        - kubelet 
+        - kubeadm 
+        - kubectl
+
+  - name: Configure node ip
+    shell: perl -pi -e '$_ .= qq(Environment="KUBELET_EXTRA_ARGS=--node-ip={{ node_ip }}\n) if /Environment="KUBELET_CONFIG_ARGS=/' "{{ kubeadm_service_conf }}"
+
+  - name: Restarting kubelet
+    shell: /bin/true
+    notify:
+      - kubelet enable-and-start
+
+  - name: Initialize the Kubernetes cluster using kubeadm
+    command: kubeadm init --apiserver-advertise-address="{{ master_ip }}" --apiserver-cert-extra-sans="{{ master_ip }}"  --node-name {{ master_name }} --pod-network-cidr={{ pod_network }}
+
+  - name: Create .kube dir for vagrant user
+    file:
+      path: "{{ vagrant_kube_dir }}"
+      state: directory
+      mode: '0755'
+
+  - name: Copy main admin.conf to vagrant .kube dir
+    copy:
+      remote_src: True
+      src: "{{ kube_admin_config }}"
+      dest: "{{ vagrant_kube_config }}"
+      owner: vagrant
+      group: vagrant
+      mode: '0644'
+
+  - name: Install calico pod network
+    become: false
+    command: kubectl create -f "{{ calico_manifest }}"
+    environment:
+      KUBECONFIG: "{{ vagrant_kube_config }}"
+
+  - name: Generate join command
+    command: kubeadm token create --print-join-command
+    register: join_command
+
+  - name: Copy join command to local file
+    become: false
+    local_action: copy content="{{ join_command.stdout_lines[0] }}" dest="./join-command"
+
+  - name: Exposing docker daemon, adding custom insecure registry and debug loglevel
+    command: perl -pi -e 's/ExecStart=(.*)$/ExecStart=\1 -H tcp:\/\/{{ dockerd_daemon_interface }} --insecure-registry={{ host_ip }}:{{ host_registry_port }} --debug/' "{{ docker_service }}"
+    notify:
+      - docker restart
+
+
+  handlers:
+    - name: kubelet enable-and-start
+      service:
+        name: kubelet
+        daemon_reload: yes
+        state: restarted
+
+    - name: docker enable-and-start
+      service:
+        name: docker
+        state: started
+        enabled: yes
+    
+    - name: docker restart
+      systemd:
+        name: docker
+        daemon_reload: yes
+        state: restarted

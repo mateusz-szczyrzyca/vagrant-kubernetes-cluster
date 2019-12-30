@@ -1,0 +1,1 @@
+kubeadm join 15.0.0.5:6443 --token qmy54h.tftmuranaggn5rf7     --discovery-token-ca-cert-hash sha256:58848b1a32d086d66bebe03030e3764b10e41c6d8e721d2b4efc3a2cb7087de8 
