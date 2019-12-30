@@ -121,6 +121,8 @@ And if it works correctly you should got:
 
 `{"repositories":[]}`
 
+Alternatively, you can use [docker-registry helm chart to deploy](https://hub.helm.sh/charts/stable/docker-registry)
+
 ## 4. Clone this repository
 
 In my case, my vagrant directory is `~/vagrant/vagrant-kubernetes-cluster` and I will be using this directory in this tutorial. In my case kubernetes-cluster is a directory which contains file from this repository. Yoi can clone this by:
@@ -214,4 +216,32 @@ And now we can check again by `$ kubectl get sc` that this class is now default:
 ```bash
 NAME                   PROVISIONER                                       RECLAIMPOLICY   VOLUMEBINDINGMODE   ALLOWVOLUMEEXPANSION   AGE
 nfs-client (default)   cluster.local/nfs-client-provisioner-1577712423   Delete          Immediate           true                   12m
+```
+
+## 8. Using docker with this cluster
+
+To attach to docker daemon exposed by master (or nodes), set this env variable:
+
+`$ export DOCKER_HOST="tcp://15.0.0.5:2375"`
+
+And now you can use cluster's docker:
+
+`$ docker ps`
+
+If you want to use your newly created docker image, use `docker build` as before, but when building is finished, check image id of newly created image:
+
+`docker images`
+
+Pick this image, and now use tag:
+
+`$ docker tag 909252161370 15.0.0.1:5000/my-kubernetes-app`
+
+And push to this registry, by:
+
+`$ docker push 15.0.0.1:5000/my-kubernetes-app`
+
+If you docker registry is working fine now you have new image pushed there, and this new image can be used in kubernetes yaml files in such manner:
+
+```yaml
+        image: 15.0.0.1:5000/my-kubernetes-app
 ```
