@@ -231,15 +231,15 @@ And now you can use cluster's docker:
 
 `$ docker ps`
 
-If you want to use your newly created docker image, use `docker build` as before, but when building is finished, check image id of newly created image:
+In this case, our private insecure registry is `15.0.0.1:5000`. All VMs (nodes and master) already use this additional insecure registry address, so we can push images there.
 
-`$ docker images`
+If you want to use your newly created docker image, use `docker build` using the following syntax:
 
-Pick this image ID, and now use tag:
+`$ docker build . -t 15.0.0.1:5000/my-kubernetes-app`
 
-`$ docker tag 909252161370 15.0.0.1:5000/my-kubernetes-app`
+Where `my-kubernetes-app` is a name of your application.
 
-And push to this registry, by:
+This build command will automatically tagged this newly created image and later you can push it to private registry by:
 
 `$ docker push 15.0.0.1:5000/my-kubernetes-app`
 
