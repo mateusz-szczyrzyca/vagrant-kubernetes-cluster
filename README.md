@@ -131,7 +131,7 @@ Alternatively, you can use [docker-registry helm chart to deploy](https://hub.he
 
 In my case, my vagrant directory is `~/vagrant/vagrant-kubernetes-cluster` and I will be using this directory in this tutorial. In my case kubernetes-cluster is a directory which contains file from this repository. You can clone this by:
 
-`$ git clone https://github.com/mateusz-szczyrzyca/vagrant-kubernetes-cluster/`
+`$ git clone https://github.com/mateusz-szczyrzyca/vagrant-kubernetes-cluster.git`
 
 ## 6. Provision VMs via vagrant
 
