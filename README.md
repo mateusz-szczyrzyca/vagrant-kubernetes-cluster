@@ -181,6 +181,10 @@ node-3       Ready    <none>   13m   v1.17.0   15.0.0.13     <none>        Ubunt
 
 It means the cluster is working properly!
 
+You also may use `vagrant ssh` to connect to a specific VM, like:
+
+`$ vagrant ssh node-2`
+
 ## 8. Attach NFS share as PersistentVolume
 
 Now it's time to use our NFS share as PV in our cluster.
