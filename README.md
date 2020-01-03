@@ -86,9 +86,6 @@ Install (according to your distribution packages)
 - [kubectl](https://kubernetes.io/docs/tasks/tools/install-kubectl/)
 - [helm](https://helm.sh/docs/intro/install/)
 
-WARNING: If you use Manjaro/Archlinux, while writting this article (just before 2020), repos contains 2.2.6 vagrant and 
-virtualbox 6.1, hence quite new, [you have to do some workaround to make vagrant work with virtualbox](https://github.com/oracle/vagrant-boxes/issues/178)
-
 If you already have vagrant, install `vagrant-scp` plugin by typing:
 
 `$ vagrant plugin install vagrant-scp`
